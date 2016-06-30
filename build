@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+CONTAINER_CGI=go-httpoxy-cgi
+CONTAINER_FCGI=go-httpoxy-fcgi
+
+IMAGE_CGI=go-httpoxy-poc-cgi:latest
+IMAGE_FCGI=go-httpoxy-poc-fcgi:latest
+
+if [ -z $TEST_PORT_CGI ]; then
+    TEST_PORT_CGI=2081
+fi
+
+if [ -z $TEST_PORT_FCGI ]; then
+    TEST_PORT_FCGI=2082
+fi
+
+echo "Building cgi"
+go build ./cmd/cgi &
+
+echo "Building fcgi"
+go build ./cmd/fcgi &
+
+wait
+
+echo "Building docker container for cgi"
+docker build -f cgi.dockerfile -t $IMAGE_CGI . &
+
+echo "Building docker container for fcgi"
+docker build -f fcgi.dockerfile -t $IMAGE_FCGI . &
+
+wait
+
+echo "Stopping any previous docker containers"
+docker stop $CONTAINER_CGI 2>/dev/null || \
+    docker kill $CONTAINER_CGI 2>/dev/null || \
+    docker rm   $CONTAINER_CGI 2>/dev/null || \
+    docker stop $CONTAINER_FCGI 2>/dev/null || \
+    docker kill $CONTAINER_FCGI 2>/dev/null || \
+    docker rm   $CONTAINER_FCGI 2>/dev/null || true
+
+echo "Starting docker container for cgi"
+docker run -d \
+    --name $CONTAINER_CGI \
+    -p $TEST_PORT_CGI:80 \
+    $IMAGE_CGI
+
+echo "Starting docker container for fcgi"
+docker run -d \
+    --name $CONTAINER_FCGI \
+    -p $TEST_PORT_FCGI:80 \
+    $IMAGE_FCGI

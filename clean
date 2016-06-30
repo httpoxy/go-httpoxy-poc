@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+CONTAINER_CGI=go-httpoxy-cgi
+CONTAINER_FCGI=go-httpoxy-fcgi
+
+IMAGE_CGI=go-httpoxy-poc-cgi:latest
+IMAGE_FCGI=go-httpoxy-poc-fcgi:latest
+
+docker stop $CONTAINER_CGI 2>/dev/null || \
+    docker kill $CONTAINER_CGI 2>/dev/null || \
+    docker rm   $CONTAINER_CGI 2>/dev/null || \
+    docker stop $CONTAINER_FCGI 2>/dev/null || \
+    docker kill $CONTAINER_FCGI 2>/dev/null || \
+    docker rm   $CONTAINER_FCGI 2>/dev/null || true
+
+docker rmi $IMAGE_CGI  2>/dev/null || true
+docker rmi $IMAGE_FCGI 2>/dev/null || true
+
+rm cgi
+rm fcgi
