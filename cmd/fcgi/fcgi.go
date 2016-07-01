@@ -4,12 +4,19 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/fcgi"
 )
 
 func main() {
-	if err := fcgi.Serve(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	listener, err := net.Listen("tcp", "127.0.0.1:9001")
+
+	if (err != nil) {
+		log.Fatal(err);
+	}
+
+	if err := fcgi.Serve(listener, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := w.Header()
 		header.Set("Content-Type", "text/plain; charset=utf-8")
 
