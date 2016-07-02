@@ -12,6 +12,12 @@ There are two test cases:
 * net/http/cgi with an apache server, and
 * net/http/fcgi with an nginx server
 
+## Versions of go tested
+
+* 1.2.1
+* 1.6
+* Latest snapshot @ 20160630
+
 ## Example run
 
 ### cgi
