@@ -1,4 +1,4 @@
-# Golang HTTPoxy Vulnerability under CGI
+# Go HTTPoxy Vulnerability under CGI
 
 Go is not usually deployed under CGI.
 
